@@ -89,10 +89,6 @@ main {
   overflow: hidden;
 }
 
-.bit {
-  background-color: red;
-}
-
 @media (width < 800px) {
   main {
     height: 100%;
