@@ -42,8 +42,8 @@ function createGenPolynomial(n) {
         for (let iPolinomio = 0; iPolinomio < polinomio.length; iPolinomio++) {
             for (let iNovo = 0; iNovo < novoTermo.length; iNovo++) {
                 // busca os expoentes de cada alpha
-                let coeficientePolinomio = polinomio[iPolinomio]
-                let coeficienteNovo = novoTermo[iNovo]
+                let coeficientePolinomio = polinomio[iPolinomio];
+                let coeficienteNovo = novoTermo[iNovo];
 
                 if (coeficientePolinomio == 0 || coeficienteNovo == 0) {
                     continue;
@@ -52,14 +52,26 @@ function createGenPolynomial(n) {
                 let expoenteNovo = LOG[coeficienteNovo];
 
                 // regras para multiplicação dos expoentes no Campo de Galois
-                    // devolve o valor inteiro após adição de expoentes e
-                    // modulação por 255 para garantir que o número esteja dentro
-                    // do campo e faz a adição com xor
-                    resultado[iPolinomio + iNovo] ^= ANTILOG[((expoenteNovo + expoentePolinomio) % 255)];
+                // devolve o valor inteiro após adição de expoentes e
+                // modulação por 255 para garantir que o número esteja dentro
+                // do campo e faz a adição com xor
+                resultado[iPolinomio + iNovo] ^=
+                    ANTILOG[(expoenteNovo + expoentePolinomio) % 255];
             }
         }
-      polinomio = resultado
+        polinomio = resultado;
     }
-  return polinomio
+    return polinomio;
 }
 
+
+// Função auxiliar para converter os coeficientes para a anotação alpha
+function convertToAlpha(polynomial) {
+    return polynomial.map((coef) => {
+        if (coef === 0) { // devolve 0 caso o número recebido seja 0
+            return 0;
+        } else {
+            return LOG[coef]; // devolve o expoente correspondente ao número
+        }
+    });
+}
