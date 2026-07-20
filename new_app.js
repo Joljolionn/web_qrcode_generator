@@ -65,15 +65,17 @@ function createGenPolynomial(n) {
 }
 
 // Função auxiliar para converter os coeficientes para a anotação alpha
-function convertToAlpha(polynomial) {
-    return polynomial.map((coef) => {
-        if (coef === 0) {
-            // devolve 0 caso o número recebido seja 0
-            return 0;
-        } else {
-            return LOG[coef]; // devolve o expoente correspondente ao número
-        }
-    });
+function convertToAlpha(coef) {
+    if (coef === 0) {
+        // devolve 0 caso o número recebido seja 0
+        return 0;
+    } else {
+        return LOG[coef]; // devolve o expoente correspondente ao número
+    }
+}
+
+function convertToIntegerNotation(exponent) {
+    return ANTILOG[exponent];
 }
 
 function createMessagePolynomial(data) {
@@ -92,5 +94,50 @@ function createMessagePolynomial(data) {
             bitCounter = 0;
         }
     }
-  return messagePolynomial;
+    return messagePolynomial;
 }
+
+// Teste para gerar codewords de correção de erro
+
+let testData =
+    "00100000010110110000101101111000110100010111001011011100010011010100001101000000111011000001000111101100000100011110110000010001";
+let messagePolynomial = createMessagePolynomial(testData);
+console.log(createMessagePolynomial(testData));
+
+let generatorPolynomial = createGenPolynomial(TABELA_ECC[`1-M`][1]);
+generatorPolynomial = generatorPolynomial.map((e) => convertToAlpha(e));
+console.log(generatorPolynomial);
+
+let intermediatePolynomial = messagePolynomial;
+let messageLead;
+let multipliedPolynomial = [];
+
+// Executa na mesma quantia de codewords totais
+for (let i = 0; i < TABELA_ECC[`1-M`][0]; i++) {
+    // Primeiro passo: multiplicar o polinomio gerador pelo primeiro termo do
+    // polinomio de mensagem
+    messageLead = convertToAlpha(intermediatePolynomial[0]);
+    multipliedPolynomial = generatorPolynomial.map((e) => {
+        return convertToIntegerNotation((e + messageLead) % 255);
+    });
+
+    // Segundo passo: XOR o resultado com o polinomio de mensagem
+    let xorPolynomial = [];
+
+    // Usa Math.max() no loop para garantir fazer o XOR de todos os valores dos
+    // dois polinômios
+    let ii = 0;
+    while (
+        ii <
+        Math.max(multipliedPolynomial.length, intermediatePolynomial.length)
+    ) {
+        ii++;
+        let tmp = intermediatePolynomial[ii] ^ multipliedPolynomial[ii];
+
+        if (tmp == 0) continue;
+
+        xorPolynomial.push(tmp);
+    }
+    intermediatePolynomial = xorPolynomial;
+}
+console.log(intermediatePolynomial);
