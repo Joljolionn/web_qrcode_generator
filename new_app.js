@@ -64,14 +64,33 @@ function createGenPolynomial(n) {
     return polinomio;
 }
 
-
 // Função auxiliar para converter os coeficientes para a anotação alpha
 function convertToAlpha(polynomial) {
     return polynomial.map((coef) => {
-        if (coef === 0) { // devolve 0 caso o número recebido seja 0
+        if (coef === 0) {
+            // devolve 0 caso o número recebido seja 0
             return 0;
         } else {
             return LOG[coef]; // devolve o expoente correspondente ao número
         }
     });
+}
+
+function createMessagePolynomial(data) {
+    // A string deve ser formada corretamente por bytes de tamanho 8
+    if (data.length % 8 != 0) return;
+
+    let messagePolynomial = [];
+    let bitCounter = 0;
+    let savedByte = "";
+    for (let i = 0; i < data.length; i++) {
+        savedByte += data[i];
+        bitCounter++;
+        if (bitCounter == 8) {
+            messagePolynomial.push(parseInt(savedByte, 2));
+            savedByte = "";
+            bitCounter = 0;
+        }
+    }
+  return messagePolynomial;
 }
