@@ -499,7 +499,6 @@ function drawDataBits(data) {
                         y
                     ].block.style.backgroundColor =
                         data[bitCounter] == 1 ? "black" : "white";
-                    matrix[size + x * direction][y].drew = true;
                     bitCounter++;
                 }
 
@@ -509,7 +508,6 @@ function drawDataBits(data) {
                         y - 1
                     ].block.style.backgroundColor =
                         data[bitCounter] == 1 ? "black" : "white";
-                    matrix[size + x * direction][y - 1].drew = true;
                     bitCounter++;
                 }
             } else {
@@ -519,7 +517,6 @@ function drawDataBits(data) {
                 if (!matrix[x][y].drew) {
                     matrix[x][y].block.style.backgroundColor =
                         data[bitCounter] == 1 ? "black" : "white";
-                    matrix[x][y].drew = true;
                     bitCounter++;
                 }
 
@@ -527,7 +524,6 @@ function drawDataBits(data) {
                 if (!matrix[x][y - 1].drew) {
                     matrix[x][y - 1].block.style.backgroundColor =
                         data[bitCounter] == 1 ? "black" : "white";
-                    matrix[x][y - 1].drew = true;
                     bitCounter++;
                 }
             }
@@ -537,3 +533,168 @@ function drawDataBits(data) {
 }
 
 drawDataBits(data);
+
+
+function maskNumber0() {
+    for (let row = 0; row < matrix.length; row++) {
+        for (let column = 0; column < matrix.length; column++) {
+            if ((row + column) % 2 == 0) {
+                if (!matrix[row][column].drew) {
+                    if (
+                        matrix[row][column].block.style.backgroundColor ==
+                        "black"
+                    ) {
+                        matrix[row][column].block.style.backgroundColor =
+                            "white";
+                    } else {
+                        matrix[row][column].block.style.backgroundColor =
+                            "black";
+                    }
+                }
+            }
+        }
+    }
+}
+
+function maskNumber1() {
+    for (let row = 0; row < matrix.length; row++) {
+        for (let column = 0; column < matrix.length; column++) {
+            if ((row + column) % 2 == 0) {
+                if (!matrix[row][column].drew) {
+                    if (
+                        matrix[row][column].block.style.backgroundColor ==
+                        "black"
+                    ) {
+                        matrix[row][column].block.style.backgroundColor =
+                            "white";
+                    } else {
+                        matrix[row][column].block.style.backgroundColor =
+                            "black";
+                    }
+                }
+            }
+        }
+    }
+}
+function maskNumber2() {
+    for (let row = 0; row < matrix.length; row++) {
+        for (let column = 0; column < matrix.length; column++) {
+            if (row % 2 == 0) {
+                if (!matrix[row][column].drew) {
+                    if (
+                        matrix[row][column].block.style.backgroundColor ==
+                        "black"
+                    ) {
+                        matrix[row][column].block.style.backgroundColor =
+                            "white";
+                    } else {
+                        matrix[row][column].block.style.backgroundColor =
+                            "black";
+                    }
+                }
+            }
+        }
+    }
+}
+function maskNumber3() {
+    for (let row = 0; row < matrix.length; row++) {
+        for (let column = 0; column < matrix.length; column++) {
+            if (column % 3 == 0) {
+                if (!matrix[row][column].drew) {
+                    if (
+                        matrix[row][column].block.style.backgroundColor ==
+                        "black"
+                    ) {
+                        matrix[row][column].block.style.backgroundColor =
+                            "white";
+                    } else {
+                        matrix[row][column].block.style.backgroundColor =
+                            "black";
+                    }
+                }
+            }
+        }
+    }
+}
+function maskNumber4() {
+    for (let row = 0; row < matrix.length; row++) {
+        for (let column = 0; column < matrix.length; column++) {
+            if ((Math.floor(row / 2) + Math.floor(column / 3)) % 2 == 0) {
+                if (!matrix[row][column].drew) {
+                    if (
+                        matrix[row][column].block.style.backgroundColor ==
+                        "black"
+                    ) {
+                        matrix[row][column].block.style.backgroundColor =
+                            "white";
+                    } else {
+                        matrix[row][column].block.style.backgroundColor =
+                            "black";
+                    }
+                }
+            }
+        }
+    }
+}
+function maskNumber5() {
+    for (let row = 0; row < matrix.length; row++) {
+        for (let column = 0; column < matrix.length; column++) {
+            if (((row * column) % 2) + ((row * column) % 3) == 0) {
+                if (!matrix[row][column].drew) {
+                    if (
+                        matrix[row][column].block.style.backgroundColor ==
+                        "black"
+                    ) {
+                        matrix[row][column].block.style.backgroundColor =
+                            "white";
+                    } else {
+                        matrix[row][column].block.style.backgroundColor =
+                            "black";
+                    }
+                }
+            }
+        }
+    }
+}
+function maskNumber6() {
+    for (let row = 0; row < matrix.length; row++) {
+        for (let column = 0; column < matrix.length; column++) {
+            if ( 	( ((row * column) % 2) + ((row * column) % 3) ) % 2 == 0) {
+                if (!matrix[row][column].drew) {
+                    if (
+                        matrix[row][column].block.style.backgroundColor ==
+                        "black"
+                    ) {
+                        matrix[row][column].block.style.backgroundColor =
+                            "white";
+                    } else {
+                        matrix[row][column].block.style.backgroundColor =
+                            "black";
+                    }
+                }
+            }
+        }
+    }
+}
+function maskNumber7() {
+    for (let row = 0; row < matrix.length; row++) {
+        for (let column = 0; column < matrix.length; column++) {
+            if ( 	( ((row + column) % 2) + ((row * column) % 3) ) % 2 == 0) {
+                if (!matrix[row][column].drew) {
+                    if (
+                        matrix[row][column].block.style.backgroundColor ==
+                        "black"
+                    ) {
+                        matrix[row][column].block.style.backgroundColor =
+                            "white";
+                    } else {
+                        matrix[row][column].block.style.backgroundColor =
+                            "black";
+                    }
+                }
+            }
+        }
+    }
+}
+
+maskNumber7();
