@@ -67,12 +67,7 @@ function createGenPolynomial(n) {
 
 // Função auxiliar para converter os coeficientes para a anotação alpha
 function convertToAlpha(coef) {
-    if (coef === 0) {
-        // devolve 0 caso o número recebido seja 0
-        return 0;
-    } else {
-        return LOG[coef]; // devolve o expoente correspondente ao número
-    }
+    return LOG[coef]; // devolve o expoente correspondente ao número
 }
 
 function convertToIntegerNotation(exponent) {
@@ -157,7 +152,7 @@ console.log(data);
 
 if (data.length % 8 != 0) {
     let padding = data.length % 8;
-    data.length += "0".repeat(padding);
+    data += "0".repeat(8 - padding);
 }
 
 console.log(data);
@@ -201,36 +196,46 @@ let generatorPolynomial = createGenPolynomial(TABELA_ECC[qrCodeType][1]);
 generatorPolynomial = generatorPolynomial.map((e) => convertToAlpha(e));
 console.log(generatorPolynomial);
 
-let intermediatePolynomial = messagePolynomial;
-let messageLead;
-let multipliedPolynomial = [];
+function generateErrorCorrectionCodewords(
+    messagePolynomial,
+    generatorPolynomialExponents,
+) {
+    // O número de codewords de correção é o tamanho do gerador - 1
+    const eccCount = generatorPolynomialExponents.length - 1;
 
-// Executa na mesma quantia de codewords totais
-for (let i = 0; i < TABELA_ECC[qrCodeType][0]; i++) {
-    // Primeiro passo: multiplicar o polinomio gerador pelo primeiro termo do
-    // polinomio de mensagem
-    messageLead = convertToAlpha(intermediatePolynomial[0]);
-    multipliedPolynomial = generatorPolynomial.map((e) => {
-        return convertToIntegerNotation((e + messageLead) % 255);
-    });
+    // Adiciona os "zeros" ao final do polinômio de mensagem
+    let result = [...messagePolynomial, ...new Array(eccCount).fill(0)];
 
-    // Segundo passo: XOR o resultado com o polinomio de mensagem
-    let xorPolynomial = [];
+    // Divisão polinomial
+    // O loop roda exatamente o tamanho da mensagem original
+    for (let i = 0; i < messagePolynomial.length; i++) {
+        let leadCoef = result[0];
 
-    // Usa Math.max() no loop para garantir fazer o XOR de todos os valores dos
-    // dois polinômios
-    let ii = 1;
-    while (
-        ii <
-        Math.max(multipliedPolynomial.length, intermediatePolynomial.length)
-    ) {
-        ii++;
-        let tmp = intermediatePolynomial[ii] ^ multipliedPolynomial[ii];
+        // Remove o primeiro item e puxa o resto
+        result.shift();
 
-        xorPolynomial.push(tmp);
+        // Só realizar a conta caso o coeficiente não seja 0 (afinal não existe LOG[0]
+        if (leadCoef !== 0) {
+            let logLead = LOG[leadCoef];
+
+            // Faz o XOR apenas com os termos relevantes
+            for (let j = 0; j < eccCount; j++) {
+                // j+1 porque pulamos o primeiro termo do polinômio gerador (que é sempre a^0)
+                let genExp = generatorPolynomialExponents[j + 1];
+                let multRes = ANTILOG[(genExp + logLead) % 255];
+
+                result[j] ^= multRes;
+            }
+        }
     }
-    intermediatePolynomial = xorPolynomial;
+    return result;
 }
+
+let intermediatePolynomial = generateErrorCorrectionCodewords(
+    messagePolynomial,
+    generatorPolynomial,
+);
+
 console.log(`Correction codewords necessárias: ${TABELA_ECC[qrCodeType][1]}`);
 console.log("codewords de correção");
 console.log(intermediatePolynomial);
@@ -534,7 +539,6 @@ function drawDataBits(data) {
 
 drawDataBits(data);
 
-
 function maskNumber0() {
     for (let row = 0; row < matrix.length; row++) {
         for (let column = 0; column < matrix.length; column++) {
@@ -659,7 +663,7 @@ function maskNumber5() {
 function maskNumber6() {
     for (let row = 0; row < matrix.length; row++) {
         for (let column = 0; column < matrix.length; column++) {
-            if ( 	( ((row * column) % 2) + ((row * column) % 3) ) % 2 == 0) {
+            if ((((row * column) % 2) + ((row * column) % 3)) % 2 == 0) {
                 if (!matrix[row][column].drew) {
                     if (
                         matrix[row][column].block.style.backgroundColor ==
@@ -679,7 +683,7 @@ function maskNumber6() {
 function maskNumber7() {
     for (let row = 0; row < matrix.length; row++) {
         for (let column = 0; column < matrix.length; column++) {
-            if ( 	( ((row + column) % 2) + ((row * column) % 3) ) % 2 == 0) {
+            if ((((row + column) % 2) + ((row * column) % 3)) % 2 == 0) {
                 if (!matrix[row][column].drew) {
                     if (
                         matrix[row][column].block.style.backgroundColor ==
@@ -698,3 +702,118 @@ function maskNumber7() {
 }
 
 maskNumber7();
+const mask = 7;
+
+let formatString = "";
+
+const ERROR_CORRECTION_BITS = {
+    L: "01",
+    M: "00",
+    Q: "11",
+    H: "10",
+};
+
+formatString += ERROR_CORRECTION_BITS[qrCodeEcc];
+
+console.log(formatString);
+
+formatString += mask.toString(2).padStart(3, "0");
+
+console.log(formatString);
+
+const formatErrorCorrectionPolynomial = "10100110111";
+
+function generateFormatCorrectionBits(formatString, generatorPolynomial) {
+    let intermediatePolynomial = formatString;
+    intermediatePolynomial.push(...Array(10).fill(0));
+    let counter = 0;
+    while (intermediatePolynomial[counter] != 1) {
+        counter++;
+    }
+    intermediatePolynomial = intermediatePolynomial.slice(counter);
+
+    while (intermediatePolynomial.length > 10) {
+        let tempGeneratorPolynomial = generatorPolynomial.slice(0);
+        if (intermediatePolynomial.length > tempGeneratorPolynomial.length) {
+            let leftOver =
+                intermediatePolynomial.length - tempGeneratorPolynomial.length;
+            tempGeneratorPolynomial.push(...Array(leftOver).fill(0));
+        }
+
+        let tempPolynomial = [];
+        for (let i = 0; i < intermediatePolynomial.length; i++) {
+            tempPolynomial.push(
+                intermediatePolynomial[i] ^ tempGeneratorPolynomial[i],
+            );
+        }
+        intermediatePolynomial = tempPolynomial;
+
+        let newCounter = 0;
+        while (intermediatePolynomial[newCounter] != 1) {
+            newCounter++;
+        }
+        intermediatePolynomial = intermediatePolynomial.slice(newCounter);
+    }
+    if (intermediatePolynomial.length < 10) {
+        let padding = 10 - intermediatePolynomial.length;
+        intermediatePolynomial.unshift(...Array(padding).fill(0));
+    }
+    return intermediatePolynomial;
+}
+
+let errorCorrectionBits = generateFormatCorrectionBits(
+    [...formatString].map((e) => Number.parseInt(e)),
+    [...formatErrorCorrectionPolynomial].map((e) => Number.parseInt(e)),
+);
+
+console.log(errorCorrectionBits);
+console.log(formatString);
+
+formatString = [...formatString];
+console.log(formatString);
+formatString.push(...errorCorrectionBits);
+
+let maskString = [..."101010000010010"].map((e) => Number.parseInt(e));
+console.log(maskString);
+
+for (let i = 0; i < formatString.length; i++) {
+    let tmp = formatString[i] ^ maskString[i];
+    formatString[i] = tmp;
+}
+
+console.log(formatString);
+
+function drawFormatBits(formatString) {
+    let startPoint = 8;
+    let i = 0;
+    let counter = 0;
+    while (i < 15) {
+        if (
+            matrix[matrix.length - 1 - counter][startPoint].block.style
+                .backgroundColor == "red"
+        ) {
+            matrix[matrix.length - 1 - counter][
+                startPoint
+            ].block.style.backgroundColor =
+                formatString[i] == 1 ? "black" : "white";
+            i++;
+        }
+        counter++;
+    }
+
+    i = 0;
+    counter = 0;
+    while (i < 15) {
+        if (matrix[startPoint][counter].block.style.backgroundColor == "red") {
+            matrix[startPoint][counter].block.style.backgroundColor =
+                formatString[i] == 1 ? "black" : "white";
+            i++;
+        }
+
+        counter++;
+    }
+    for (let i = 0; i < 15; i++) {}
+    for (let i = 0; i < 15; i++) {}
+}
+
+drawFormatBits(formatString);
