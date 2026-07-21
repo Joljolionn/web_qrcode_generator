@@ -435,3 +435,16 @@ function drawTimingPatterns() {
 }
 
 drawTimingPatterns();
+
+function drawDarkModule(version) {
+  // Uso "matrix.lenght - " o valor real para converter a posição (baixo->cima
+  // e esquerda->direita) para o local correto na matrix (cima->baixo e
+  // esquerda->direita)
+
+    const moduleY = matrix.length - (4 * version + 9);
+    const moduleX = matrix.length - 8;
+    matrix[moduleX][moduleY].block.style.backgroundColor = "black";
+    matrix[moduleX][moduleY].drew = true;
+}
+
+drawDarkModule(qrCodeVersion);
