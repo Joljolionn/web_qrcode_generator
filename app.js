@@ -104,7 +104,9 @@ const qrcode = document.getElementById("qrcode__code");
 // redirecionar para um vídeo do youtube
 let link = "https://youtu.be/dQw4w9WgXcQ?si=M-bihjX-dQRfabe2";
 let data = "";
-const qrcodeType = "3-L";
+const qrCodeVersion = "3";
+const qrCodeEcc = "L";
+const qrCodeType = `${qrCodeVersion}-${qrCodeEcc}`;
 
 // [PRIMEIRO PASSO]: Adicionar indicador de modo
 data += "0100";
@@ -187,7 +189,7 @@ if (data.length < requiredBits) {
 
 console.log(data);
 console.log(data.length);
-console.log(TABELA_ECC[qrcodeType]);
+console.log(TABELA_ECC[qrCodeType]);
 
 console.log("Começo da correção de erros");
 
@@ -195,7 +197,7 @@ console.log("Começo da correção de erros");
 const messagePolynomial = createMessagePolynomial(data);
 console.log(createMessagePolynomial(data));
 
-let generatorPolynomial = createGenPolynomial(TABELA_ECC[qrcodeType][1]);
+let generatorPolynomial = createGenPolynomial(TABELA_ECC[qrCodeType][1]);
 generatorPolynomial = generatorPolynomial.map((e) => convertToAlpha(e));
 console.log(generatorPolynomial);
 
@@ -204,7 +206,7 @@ let messageLead;
 let multipliedPolynomial = [];
 
 // Executa na mesma quantia de codewords totais
-for (let i = 0; i < TABELA_ECC[qrcodeType][0]; i++) {
+for (let i = 0; i < TABELA_ECC[qrCodeType][0]; i++) {
     // Primeiro passo: multiplicar o polinomio gerador pelo primeiro termo do
     // polinomio de mensagem
     messageLead = convertToAlpha(intermediatePolynomial[0]);
@@ -229,7 +231,7 @@ for (let i = 0; i < TABELA_ECC[qrcodeType][0]; i++) {
     }
     intermediatePolynomial = xorPolynomial;
 }
-console.log(`Correction codewords necessárias: ${TABELA_ECC[qrcodeType][1]}`);
+console.log(`Correction codewords necessárias: ${TABELA_ECC[qrCodeType][1]}`);
 console.log("codewords de correção");
 console.log(intermediatePolynomial);
 
@@ -247,7 +249,7 @@ function calculateQrCodeSize(version) {
     return (version - 1) * 4 + 21;
 }
 
-let qrCodeSize = calculateQrCodeSize(3);
+let qrCodeSize = calculateQrCodeSize(qrCodeVersion);
 console.log(qrCodeSize);
 console.log(qrCodeSize ** 2);
 qrcode.style.grid = `repeat(${qrCodeSize}, 1fr) / repeat(${qrCodeSize}, 1fr)`;
@@ -394,17 +396,42 @@ function drawAlignmentPattern(centerX, centerY) {
 }
 
 // busca as posições respectivas do padrão usando a tabela oficial
-const positions = ALIGMENT_PATTERN_TABLE[qrcodeType.split("-")[0]];
+const positions = ALIGMENT_PATTERN_TABLE[qrCodeType.split("-")[0]];
 
 // Desenha os padrões de alinhamento combinando todos os padrões de linha e
 // coluna
 positions.forEach((positionX) => {
     if (positionX != "") {
         positions.forEach((positionY) => {
-          if (positionY != ""){
-            drawAlignmentPattern(positionX, positionY);
-            console.log(`(${positionX} ; ${positionY} )`);
-          }
+            if (positionY != "") {
+                drawAlignmentPattern(positionX, positionY);
+                console.log(`(${positionX} ; ${positionY} )`);
+            }
         });
     }
 });
+
+// Sempre começa no mesmo ponto independente da versão então não precisa de
+// parâmetros
+function drawTimingPatterns() {
+    const startPoint = 6; // posição (6;6)
+
+    for (let i = 0; i < matrix.length - startPoint; i++) {
+        // linha horizontal
+        if (!matrix[startPoint][startPoint + i].drew) {
+            matrix[startPoint][startPoint + i].block.style.backgroundColor =
+                i % 2 == 0 ? "black" : "white";
+            matrix[startPoint][startPoint + i].drew = true;
+        }
+
+        // linha vertical
+        if (!matrix[startPoint + i][startPoint].drew) {
+            matrix[startPoint + i][startPoint].block.style.backgroundColor =
+                i % 2 == 0 ? "black" : "white";
+
+            matrix[startPoint + i][startPoint].drew = true;
+        }
+    }
+}
+
+drawTimingPatterns();
