@@ -437,9 +437,9 @@ function drawTimingPatterns() {
 drawTimingPatterns();
 
 function drawDarkModule(version) {
-  // Uso "matrix.lenght - " o valor real para converter a posição (baixo->cima
-  // e esquerda->direita) para o local correto na matrix (cima->baixo e
-  // esquerda->direita)
+    // Uso "matrix.lenght - " o valor real para converter a posição (baixo->cima
+    // e esquerda->direita) para o local correto na matrix (cima->baixo e
+    // esquerda->direita)
 
     const moduleY = matrix.length - (4 * version + 9);
     const moduleX = matrix.length - 8;
@@ -448,3 +448,33 @@ function drawDarkModule(version) {
 }
 
 drawDarkModule(qrCodeVersion);
+
+// A área reservada independe da versão
+function reserveFormatArea() {
+    const start = 8; // tamanho do finder pattern + borda
+
+    matrix[start][start].block.style.backgroundColor = "red";
+    matrix[start][start].drew = true;
+
+    // linha horizontal
+    for (let y = 0; y < matrix.length; y++) {
+        if (matrix[start - 1][y].drew) {
+            if (!matrix[start][y].drew) {
+                matrix[start][y].block.style.backgroundColor = "red";
+                matrix[start][y].drew;
+            }
+        }
+    }
+
+    // linha vertical
+    for (let x = 0; x < matrix.length; x++) {
+        if (matrix[x][start - 1].drew) {
+            if (!matrix[x][start].drew) {
+                matrix[x][start].block.style.backgroundColor = "red";
+                matrix[x][start].drew;
+            }
+        }
+    }
+}
+
+reserveFormatArea();
