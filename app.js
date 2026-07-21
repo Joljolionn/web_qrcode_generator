@@ -237,6 +237,7 @@ console.log(intermediatePolynomial);
 
 console.log(data);
 
+// adicionando codewords de correção de erro na string de dados
 intermediatePolynomial.map((e) => {
     data += e.toString(2).padStart(8, "0");
 });
@@ -268,7 +269,7 @@ for (let i = 0; i < qrCodeSize; i++) {
     for (let j = 0; j < qrCodeSize; j++) {
         const block = document.createElement("span");
         if ((i + j) % 2 == 0) {
-            block.style = "background-color: black";
+            block.style = "background-color: white";
         } else {
             block.style = "background-color: white";
         }
@@ -461,7 +462,7 @@ function reserveFormatArea() {
         if (matrix[start - 1][y].drew) {
             if (!matrix[start][y].drew) {
                 matrix[start][y].block.style.backgroundColor = "red";
-                matrix[start][y].drew;
+                matrix[start][y].drew = true;
             }
         }
     }
@@ -471,10 +472,68 @@ function reserveFormatArea() {
         if (matrix[x][start - 1].drew) {
             if (!matrix[x][start].drew) {
                 matrix[x][start].block.style.backgroundColor = "red";
-                matrix[x][start].drew;
+                matrix[x][start].drew = true;
             }
         }
     }
 }
 
 reserveFormatArea();
+
+function drawDataBits(data) {
+    // Começa da ponta direita subindo
+    let direction = -1;
+    let size = matrix.length - 1;
+    let bitCounter = 0;
+    for (let y = matrix.length - 1; y >= 0; y -= 2) {
+        // regra para pular timing pattern
+        if (y == 6) y -= 1;
+
+        for (let x = 0; x < matrix.length; x++) {
+            if (direction < 0) {
+                // subindo
+
+                // direita
+                if (!matrix[size + x * direction][y].drew) {
+                    matrix[size + x * direction][
+                        y
+                    ].block.style.backgroundColor =
+                        data[bitCounter] == 1 ? "black" : "white";
+                    matrix[size + x * direction][y].drew = true;
+                    bitCounter++;
+                }
+
+                // esquerda
+                if (!matrix[size + x * direction][y - 1].drew) {
+                    matrix[size + x * direction][
+                        y - 1
+                    ].block.style.backgroundColor =
+                        data[bitCounter] == 1 ? "black" : "white";
+                    matrix[size + x * direction][y - 1].drew = true;
+                    bitCounter++;
+                }
+            } else {
+                // descendo
+
+                // direito
+                if (!matrix[x][y].drew) {
+                    matrix[x][y].block.style.backgroundColor =
+                        data[bitCounter] == 1 ? "black" : "white";
+                    matrix[x][y].drew = true;
+                    bitCounter++;
+                }
+
+                // esquerdo
+                if (!matrix[x][y - 1].drew) {
+                    matrix[x][y - 1].block.style.backgroundColor =
+                        data[bitCounter] == 1 ? "black" : "white";
+                    matrix[x][y - 1].drew = true;
+                    bitCounter++;
+                }
+            }
+        }
+        direction *= -1;
+    }
+}
+
+drawDataBits(data);
