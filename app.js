@@ -1,4 +1,5 @@
 import TABELA_ECC from "./tabela_ecc.json" with { type: "json" };
+import ALIGMENT_PATTERN_TABLE from "./alignment_table.json" with { type: "json" };
 // [TABELAS ESSENCIAIS]
 
 // [TABELA ECC]
@@ -98,7 +99,6 @@ function createMessagePolynomial(data) {
 }
 
 const qrcode = document.getElementById("qrcode__code");
-const qrcodeSize = document.getElementById("qrcode__size");
 
 // Para o primeiro teste, o objetivo é criar um qrcode 21x21 capaz de me
 // redirecionar para um vídeo do youtube
@@ -233,11 +233,106 @@ console.log(`Correction codewords necessárias: ${TABELA_ECC[qrcodeType][1]}`);
 console.log("codewords de correção");
 console.log(intermediatePolynomial);
 
+console.log(data);
 
-for (let i = 0; i < 21; i++) {
-    for (let j = 0; j < 21; j++) {
+intermediatePolynomial.map((e) => {
+    data += e.toString(2).padStart(8, "0");
+});
+
+console.log(data);
+
+// EXIBIÇÃO DO QR-CODE
+
+function calculateQrCodeSize(version) {
+    return (version - 1) * 4 + 21;
+}
+
+let qrCodeSize = calculateQrCodeSize(3);
+console.log(qrCodeSize);
+console.log(qrCodeSize ** 2);
+qrcode.style.grid = `repeat(${qrCodeSize}, 1fr) / repeat(${qrCodeSize}, 1fr)`;
+
+let matrix = [];
+class Module {
+    constructor(block) {
+        this.block = block;
+        this.drew = false;
+    }
+    block;
+    drew;
+}
+for (let i = 0; i < qrCodeSize; i++) {
+    const linha = [];
+    for (let j = 0; j < qrCodeSize; j++) {
         const block = document.createElement("span");
-        if ((i + j) % 2 == 0) block.style = "background-color: black";
+        if ((i + j) % 2 == 0) {
+            block.style = "background-color: black";
+        } else {
+            block.style = "background-color: white";
+        }
         qrcode.appendChild(block);
+        linha.push(new Module(block));
+    }
+    matrix.push(linha);
+}
+
+function drawFinderPattern(topLeftCornerX, topLeftCornerY) {
+    for (let x = 0; x < 7; x++) {
+        for (let y = 0; y < 7; y++) {
+            if (x == 0 || x == 6) {
+                matrix[topLeftCornerX + x][
+                    topLeftCornerY + y
+                ].block.style.backgroundColor = "black";
+                matrix[topLeftCornerX + x][topLeftCornerY + y].drew = true;
+            } else {
+                if (y == 0 || y == 6) {
+                    matrix[topLeftCornerX + x][
+                        topLeftCornerY + y
+                    ].block.style.backgroundColor = "black";
+                    matrix[topLeftCornerX + x][topLeftCornerY + y].drew = true;
+                } else {
+                    if (x > 1 && x < 5 && y > 1 && y < 5) {
+                        matrix[topLeftCornerX + x][
+                            topLeftCornerY + y
+                        ].block.style.backgroundColor = "black";
+                        matrix[topLeftCornerX + x][topLeftCornerY + y].drew =
+                            true;
+                    } else {
+                        matrix[topLeftCornerX + x][
+                            topLeftCornerY + y
+                        ].block.style.backgroundColor = "white";
+                        matrix[topLeftCornerX + x][topLeftCornerY + y].drew =
+                            true;
+                    }
+                }
+            }
+        }
     }
 }
+
+function drawFinderSeparators(cornerX, cornerY) {
+    const directionX = cornerX > matrix.length - cornerX ? 1 : -1;
+    const directionY = cornerY > matrix.length - cornerY ? 1 : -1;
+
+    for (let i = 0; i <= 7; i++) {
+        matrix[cornerX + i * directionX][cornerY].block.style.backgroundColor =
+            "white";
+        matrix[cornerX][cornerY + i * directionY].block.style.backgroundColor =
+            "white";
+        matrix[cornerX + i * directionX][cornerY].drew = true;
+        matrix[cornerX][cornerY + i * directionY].drew = true;
+    }
+}
+//
+// canto superior esquerdo
+drawFinderPattern(0, 0);
+drawFinderSeparators(7, 7);
+
+// canto superior direito
+drawFinderPattern(0, matrix.length - 7);
+drawFinderSeparators(7, matrix.length - 8);
+
+// canto inferior esquerdo
+drawFinderPattern(matrix.length - 7, 0);
+drawFinderSeparators(matrix.length - 8, 7);
+
