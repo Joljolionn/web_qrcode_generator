@@ -336,3 +336,75 @@ drawFinderSeparators(7, matrix.length - 8);
 drawFinderPattern(matrix.length - 7, 0);
 drawFinderSeparators(matrix.length - 8, 7);
 
+function drawAlignmentPattern(centerX, centerY) {
+    const startX = centerX - 2;
+    const startY = centerY - 2;
+
+    // verificar perimetro
+    for (let x = 0; x < 5; x++) {
+        for (let y = 0; y < 5; y++) {
+            if (matrix[startX + x][startY + y].drew == true) {
+                console.log("retorno em " + (startX + x) + " " + (startY + y));
+                return;
+            }
+        }
+    }
+
+    // desenhar linhas horizontais
+    for (let i = 0; i < 5; i++) {
+        matrix[startX][startY + i].block.style.backgroundColor = "black";
+        matrix[startX][startY + i].drew = true;
+        matrix[startX + 4][startY + i].block.style.backgroundColor = "black";
+        matrix[startX + 4][startY + i].drew = true;
+    }
+
+    matrix[centerX][centerY].block.style.backgroundColor = "black";
+    matrix[centerX][centerY].drew = true;
+
+    // desenhar linhas verticais e pintar o fundo de branco
+    for (let i = 0; i < 5; i++) {
+        if (i == 0 || i == 4) {
+            matrix[startX + 1][startY + i].block.style.backgroundColor =
+                "black";
+            matrix[startX + 1][startY + i].drew = true;
+
+            matrix[startX + 2][startY + i].block.style.backgroundColor =
+                "black";
+            matrix[startX + 2][startY + i].drew = true;
+
+            matrix[startX + 3][startY + i].block.style.backgroundColor =
+                "black";
+            matrix[startX + 3][startY + i].drew = true;
+        } else {
+            matrix[startX + 1][startY + i].block.style.backgroundColor =
+                "white";
+            matrix[startX + 1][startY + i].drew = true;
+
+            if (!matrix[startX + 2][startY + i].drew) {
+                matrix[startX + 2][startY + i].block.style.backgroundColor =
+                    "white";
+            }
+            matrix[startX + 2][startY + i].drew = true;
+
+            matrix[startX + 3][startY + i].block.style.backgroundColor =
+                "white";
+            matrix[startX + 3][startY + i].drew = true;
+        }
+    }
+}
+
+// busca as posições respectivas do padrão usando a tabela oficial
+const positions = ALIGMENT_PATTERN_TABLE[qrcodeType.split("-")[0]];
+
+// Desenha os padrões de alinhamento combinando todos os padrões de linha e
+// coluna
+positions.forEach((positionX) => {
+    if (positionX != "") {
+        positions.forEach((positionY) => {
+          if (positionY != ""){
+            drawAlignmentPattern(positionX, positionY);
+            console.log(`(${positionX} ; ${positionY} )`);
+          }
+        });
+    }
+});
