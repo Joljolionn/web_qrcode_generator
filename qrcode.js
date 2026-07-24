@@ -52,7 +52,7 @@ export default class QrCode {
     // [FUNÇÕES AUXILIARES]
     // Primeiro, cria-se o polinômio para 3 correction codewords
     // Depois, criam-se os próximos usando os termos até n-1
-    createGenPolynomial(n) {
+    createGeneratorPolynomial(n) {
         let polinomio = [1]; // primeiro termo (1x^0 ou 1)
 
         for (let I = 0; I < n; I++) {
@@ -92,7 +92,7 @@ export default class QrCode {
             }
             polinomio = resultado;
         }
-        return polinomio;
+        return polinomio.map((e) => this.getLog(e));
     }
 
     // Função auxiliar para converter os coeficientes para a anotação alpha
@@ -626,16 +626,161 @@ export default class QrCode {
         for (let i = 0; i < 15; i++) {}
     }
 
-    getMinVersion(link) {
+    getMinVersion(data) {
         for (const versionKey in CHAR_CAPACITIES_TABLE) {
             const version = CHAR_CAPACITIES_TABLE[versionKey];
             for (const levelKey in version) {
                 const level = version[levelKey];
-                if (level[2] >= link.length)
+                if (level[2] >= data.length)
                     return new QrCodeType(versionKey, levelKey);
             }
         }
         return -1;
+    }
+
+    encodeData(data) {
+        const qrCodeType = this.getMinVersion(data);
+        const qrCodeTypeKey = qrCodeType.version + "-" + qrCodeType.level;
+        let encodedData = "";
+
+        // [PRIMEIRO PASSO]: Adicionar indicador de modo
+        // [Atualmente programa suporta somenta modo byte]
+        encodedData += "0100";
+
+        // [SEGUNDO PASSO]: Adicionar contagem de caracteres e padding (para o qrcode
+        //   de nivel 1, a contagem deve conter 8 bits, cobrindo para esquerda com
+        //   padding de "0"s se sobrarem bits)
+        encodedData += data.length.toString(2).padStart(8, "0");
+
+        // [TERCEIRO PASSO]: Codificar o link desejado
+        //  Para codificar o link no modo byte, devemos converter cada caractere para
+        //  seu byte hexadecimal e em seguida para seu relativo binário (e fazer o
+        //  padding com "0"s para cada caractere ocupar um byte com 8 bits)
+
+        for (let i = 0; i < data.length; i++) {
+            encodedData += data[i].charCodeAt(0).toString(2).padStart(8, "0");
+        }
+
+        // [QUARTO PASSO]: Determinar quantidade de bits que o qrcode deve possuir
+        // (depende da versão e nível de correção do qrcode sendo que cada
+        // codeword equivale a 8 bits, então temos:
+        const requiredBits = TABELA_ECC[qrCodeTypeKey][0] * 8;
+
+        // [QUINTO PASSO]: Adicionar os "0"s terminadores para os dados (vai quantos
+        // "0"s der pra por, no máximo 4"
+        for (let i = 0; i < 4; i++) {
+            if (encodedData.length < requiredBits) {
+                encodedData += "0";
+            }
+        }
+
+        // [SEXTO PASSO]: Garantir que o último conjunto de bits forma um byte (8
+        // bits), se não, adicionar padding com "0"s
+        if (encodedData.length % 8 != 0) {
+            let padding = encodedData.length % 8;
+            encodedData += "0".repeat(8 - padding);
+        }
+
+        // [SÉTIMO PASSO]: Adicionar pad bytes se necessário (caso o tamanho da string de
+        // bits ainda não atinga o tamanho necessário para a versão e níveis
+        // especificados, os seguintes pad bytes devem ser adicionados repetidamente
+        // até que o tamanho seja atingido: "11101100 00010001")
+
+        const firstPaddingByte = "11101100";
+        const secondPaddingByte = "00010001";
+
+        if (encodedData.length < requiredBits) {
+            const missingBits = requiredBits - encodedData.length;
+
+            const missingBytes = missingBits / 8;
+
+            if (missingBytes % 2 == 0) {
+                encodedData += (firstPaddingByte + secondPaddingByte).repeat(
+                    missingBytes,
+                );
+            } else {
+                encodedData +=
+                    (firstPaddingByte + secondPaddingByte).repeat(
+                        Math.floor(missingBytes / 2),
+                    ) + firstPaddingByte;
+            }
+        }
+
+        return encodedData;
+    }
+
+    createFormatString(qrCodeType, mask) {
+        let formatString = "";
+
+        formatString += this.ERROR_CORRECTION_BITS[qrCodeType.level];
+
+        formatString += mask.toString(2).padStart(3, "0");
+
+        let errorCorrectionBits = this.generateFormatCorrectionBits(
+            [...formatString].map((e) => Number.parseInt(e)),
+            [...this.formatErrorCorrectionPolynomial].map((e) =>
+                Number.parseInt(e),
+            ),
+        );
+
+        formatString = [...formatString];
+        formatString.push(...errorCorrectionBits);
+
+        let maskString = [..."101010000010010"].map((e) => Number.parseInt(e));
+
+        for (let i = 0; i < formatString.length; i++) {
+            let tmp = formatString[i] ^ maskString[i];
+            formatString[i] = tmp;
+        }
+
+        return formatString;
+    }
+
+    createMatrix(div, qrCodeSize) {
+        const matrix = [];
+
+        for (let i = 0; i < qrCodeSize; i++) {
+            const linha = [];
+            for (let j = 0; j < qrCodeSize; j++) {
+                const block = document.createElement("span");
+                if ((i + j) % 2 == 0) {
+                    block.style = "background-color: white";
+                } else {
+                    block.style = "background-color: white";
+                }
+                div.appendChild(block);
+                linha.push(new Module(block));
+            }
+            matrix.push(linha);
+        }
+        return matrix;
+    }
+
+    encodeDataWithECC(data) {
+        const qrCodeType = this.getMinVersion(data);
+        const qrCodeTypeKey = qrCodeType.version + "-" + qrCodeType.level;
+
+        let encodedData = this.encodeData(data);
+
+        // Error correction steps
+
+        const messagePolynomial = this.createMessagePolynomial(encodedData);
+
+        const generatorPolynomial = this.createGeneratorPolynomial(
+            TABELA_ECC[qrCodeTypeKey][1],
+        );
+
+        let intermediatePolynomial = this.generateErrorCorrectionCodewords(
+            messagePolynomial,
+            generatorPolynomial,
+        );
+
+        // adicionando codewords de correção de erro na string de dados
+        intermediatePolynomial.map((e) => {
+            encodedData += e.toString(2).padStart(8, "0");
+        });
+
+        return encodedData;
     }
 }
 
@@ -646,4 +791,13 @@ class QrCodeType {
     }
     version;
     level;
+}
+
+class Module {
+    constructor(block) {
+        this.block = block;
+        this.drew = false;
+    }
+    block;
+    drew;
 }
