@@ -2,7 +2,7 @@ import TABELA_ECC from "./tabela_ecc.json" with { type: "json" };
 import ALIGMENT_PATTERN_TABLE from "./alignment_table.json" with { type: "json" };
 import QrCode from "./qrcode.js";
 
-const qrCode = new QrCode()
+const qrCode = new QrCode();
 
 const qrcode = document.getElementById("qrcode__code");
 
@@ -10,9 +10,8 @@ const qrcode = document.getElementById("qrcode__code");
 // redirecionar para um vídeo do youtube
 let link = "https://youtu.be/dQw4w9WgXcQ?si=M-bihjX-dQRfabe2";
 let data = "";
-const qrCodeVersion = "3";
-const qrCodeEcc = "L";
-const qrCodeType = `${qrCodeVersion}-${qrCodeEcc}`;
+const qrCodeType = qrCode.getMinVersion(link);
+const qrCodeTypeKey = qrCodeType.version+"-"+qrCodeType.level
 
 // [PRIMEIRO PASSO]: Adicionar indicador de modo
 data += "0100";
@@ -45,7 +44,7 @@ console.log(data);
 // quantia de codewords é 55, sendo que cada codeword equivale a 8 bits, então
 // temos:
 
-let requiredBits = 55 * 8;
+let requiredBits = TABELA_ECC[qrCodeTypeKey][0] * 8;
 console.log(data.length);
 console.log(requiredBits);
 
@@ -73,8 +72,8 @@ console.log(data);
 // especificados, os seguintes pad bytes devem ser adicionados repetidamente
 // até que o tamanho seja atingido: "11101100 00010001")
 
-let firstPaddingByte = "11101100";
-let secondPaddingByte = "00010001";
+const firstPaddingByte = "11101100";
+const secondPaddingByte = "00010001";
 
 if (data.length < requiredBits) {
     const missingBits = requiredBits - data.length;
@@ -95,7 +94,7 @@ if (data.length < requiredBits) {
 
 console.log(data);
 console.log(data.length);
-console.log(TABELA_ECC[qrCodeType]);
+console.log(TABELA_ECC[qrCodeTypeKey]);
 
 console.log("Começo da correção de erros");
 
@@ -103,17 +102,16 @@ console.log("Começo da correção de erros");
 const messagePolynomial = qrCode.createMessagePolynomial(data);
 console.log(qrCode.createMessagePolynomial(data));
 
-let generatorPolynomial = qrCode.createGenPolynomial(TABELA_ECC[qrCodeType][1]);
+let generatorPolynomial = qrCode.createGenPolynomial(TABELA_ECC[qrCodeTypeKey][1]);
 generatorPolynomial = generatorPolynomial.map((e) => qrCode.getLog(e));
 console.log(generatorPolynomial);
-
 
 let intermediatePolynomial = qrCode.generateErrorCorrectionCodewords(
     messagePolynomial,
     generatorPolynomial,
 );
 
-console.log(`Correction codewords necessárias: ${TABELA_ECC[qrCodeType][1]}`);
+console.log(`Correction codewords necessárias: ${TABELA_ECC[qrCodeTypeKey][1]}`);
 console.log("codewords de correção");
 console.log(intermediatePolynomial);
 
@@ -128,7 +126,7 @@ console.log(data);
 
 // EXIBIÇÃO DO QR-CODE
 
-let qrCodeSize = qrCode.calculateQrCodeSize(qrCodeVersion);
+let qrCodeSize = qrCode.calculateQrCodeSize(qrCodeType.version);
 console.log(qrCodeSize);
 console.log(qrCodeSize ** 2);
 qrcode.style.grid = `repeat(${qrCodeSize}, 1fr) / repeat(${qrCodeSize}, 1fr)`;
@@ -157,7 +155,6 @@ for (let i = 0; i < qrCodeSize; i++) {
     matrix.push(linha);
 }
 
-
 //
 // canto superior esquerdo
 qrCode.drawFinderPattern(0, 0, matrix);
@@ -171,9 +168,8 @@ qrCode.drawFinderSeparators(7, matrix.length - 8, matrix);
 qrCode.drawFinderPattern(matrix.length - 7, 0, matrix);
 qrCode.drawFinderSeparators(matrix.length - 8, 7, matrix);
 
-
 // busca as posições respectivas do padrão usando a tabela oficial
-const positions = ALIGMENT_PATTERN_TABLE[qrCodeType.split("-")[0]];
+const positions = ALIGMENT_PATTERN_TABLE[qrCodeType.version];
 
 // Desenha os padrões de alinhamento combinando todos os padrões de linha e
 // coluna
@@ -188,35 +184,28 @@ positions.forEach((positionX) => {
     }
 });
 
-
 qrCode.drawTimingPatterns(matrix);
 
-
-qrCode.drawDarkModule(qrCodeVersion, matrix);
+qrCode.drawDarkModule(qrCodeType.version, matrix);
 
 // A área reservada independe da versão
 
 qrCode.reserveFormatArea(matrix);
 
-
 qrCode.drawDataBits(data, matrix);
-
 
 qrCode.maskNumber7(matrix);
 const mask = 7;
 
 let formatString = "";
 
-
-formatString += qrCode.ERROR_CORRECTION_BITS[qrCodeEcc];
+formatString += qrCode.ERROR_CORRECTION_BITS[qrCodeType.level];
 
 console.log(formatString);
 
 formatString += mask.toString(2).padStart(3, "0");
 
 console.log(formatString);
-
-
 
 let errorCorrectionBits = qrCode.generateFormatCorrectionBits(
     [...formatString].map((e) => Number.parseInt(e)),
@@ -239,6 +228,5 @@ for (let i = 0; i < formatString.length; i++) {
 }
 
 console.log(formatString);
-
 
 qrCode.drawFormatBits(formatString, matrix);

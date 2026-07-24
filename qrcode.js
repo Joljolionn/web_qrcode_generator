@@ -1,6 +1,20 @@
 import TABELA_ECC from "./tabela_ecc.json" with { type: "json" };
 import ALIGNMENT_PATTERN_TABLE from "./alignment_table.json" with { type: "json" };
+import CHAR_CAPACITIES_TABLE from "./char_capacities_table.json" with { type: "json" };
+
 // [TABELAS ESSENCIAIS]
+
+// [TABELA CHAR_CAPACITIES]
+// Version
+// {
+//    Error Correction Level
+//        {
+//          Numeric Mode, [0]
+//          Alphanumeric Mode, [1]
+//          Byte Mode, [2]
+//          Kanji Mode [3]
+//        }
+//  }
 
 // [TABELA ECC]
 // FORMATO DO JSON:
@@ -612,4 +626,24 @@ export default class QrCode {
         for (let i = 0; i < 15; i++) {}
     }
 
+    getMinVersion(link) {
+        for (const versionKey in CHAR_CAPACITIES_TABLE) {
+            const version = CHAR_CAPACITIES_TABLE[versionKey];
+            for (const levelKey in version) {
+                const level = version[levelKey];
+                if (level[2] >= link.length)
+                    return new QrCodeType(versionKey, levelKey);
+            }
+        }
+        return -1;
+    }
+}
+
+class QrCodeType {
+    constructor(version, level) {
+        this.version = version;
+        this.level = level;
+    }
+    version;
+    level;
 }
