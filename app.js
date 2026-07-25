@@ -11,25 +11,21 @@ const qrcodeDiv = document.getElementById("qrcode__code");
 // redirecionar para um vídeo do youtube
 const link = "https://youtu.be/dQw4w9WgXcQ?si=M-bihjX-dQRfabe2";
 const qrCodeType = qrCodeEncoder.getMinVersion(link);
-
-const data = qrCodeEncoder.encodeDataWithECC(link);
-
-// EXIBIÇÃO DO QR-CODE
-
 const qrCodeSize = qrCodeEncoder.calculateQrCodeSize(qrCodeType.version);
 
+
+
+
+const data = qrCodeEncoder.encodeDataWithECC(link);
 const matrix = qrCodeRenderer.createMatrix(qrcodeDiv, qrCodeSize);
 
-//
 
 qrCodeRenderer.drawBase(qrCodeType);
-
 qrCodeRenderer.drawDataBits(data);
 
-const mask = qrCodeRenderer.maskNumber7(matrix);
+const mask = qrCodeRenderer.drawMask(7);
 
 const formatString = qrCodeEncoder.createFormatString(qrCodeType, mask);
 
-console.log(formatString);
 
 qrCodeRenderer.drawFormatBits(formatString);

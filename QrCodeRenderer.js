@@ -297,174 +297,62 @@ export default class QrCodeRenderer {
         return matrix;
     }
 
-    maskNumber0(matrix) {
-        for (let row = 0; row < matrix.length; row++) {
-            for (let column = 0; column < matrix.length; column++) {
-                if ((row + column) % 2 == 0) {
-                    if (!matrix[row][column].drew) {
-                        if (
-                            matrix[row][column].block.style.backgroundColor ==
-                            "black"
-                        ) {
-                            matrix[row][column].block.style.backgroundColor =
-                                "white";
-                        } else {
-                            matrix[row][column].block.style.backgroundColor =
-                                "black";
-                        }
+    drawMask(number) {
+        for (let row = 0; row < this.matrix.length; row++) {
+            for (let column = 0; column < this.matrix.length; column++) {
+                if (!this.matrix[row][column].drew) {
+                    let isMasked = false;
+                    switch (number) {
+                        case 0:
+                            isMasked = (row + column) % 2 == 0;
+                            break;
+                        case 1:
+                            isMasked = row % 2 == 0;
+                            break;
+                        case 2:
+                            isMasked = column % 3 == 0;
+                            break;
+                        case 3:
+                            isMasked = (row + column) % 3 == 0;
+                            break;
+                        case 4:
+                            isMasked =
+                                (Math.floor(row / 2) + Math.floor(column / 3)) %
+                                    2 ==
+                                0;
+                            break;
+                        case 5:
+                            isMasked =
+                                ((row * column) % 2) + ((row * column) % 3) ==
+                                0;
+                            break;
+                        case 6:
+                            isMasked =
+                                (((row * column) % 2) + ((row * column) % 3)) %
+                                    2 ==
+                                0;
+                            break;
+                        case 7:
+                            isMasked =
+                                (((row + column) % 2) + ((row * column) % 3)) %
+                                    2 ==
+                                0;
+                            break;
+                        default:
+                            console.log("ERRO NA APLICAÇÃO DA MÁSCARA");
+                            return;
+                    }
+                    if (isMasked) {
+                        this.matrix[row][column].block.style.backgroundColor =
+                            this.matrix[row][column].block.style
+                                .backgroundColor == "black"
+                                ? "white"
+                                : "black";
                     }
                 }
             }
         }
-        return 0;
-    }
-
-    maskNumber1(matrix) {
-        for (let row = 0; row < matrix.length; row++) {
-            for (let column = 0; column < matrix.length; column++) {
-                if ((row + column) % 2 == 0) {
-                    if (!matrix[row][column].drew) {
-                        if (
-                            matrix[row][column].block.style.backgroundColor ==
-                            "black"
-                        ) {
-                            matrix[row][column].block.style.backgroundColor =
-                                "white";
-                        } else {
-                            matrix[row][column].block.style.backgroundColor =
-                                "black";
-                        }
-                    }
-                }
-            }
-        }
-        return 1;
-    }
-    maskNumber2(matrix) {
-        for (let row = 0; row < matrix.length; row++) {
-            for (let column = 0; column < matrix.length; column++) {
-                if (row % 2 == 0) {
-                    if (!matrix[row][column].drew) {
-                        if (
-                            matrix[row][column].block.style.backgroundColor ==
-                            "black"
-                        ) {
-                            matrix[row][column].block.style.backgroundColor =
-                                "white";
-                        } else {
-                            matrix[row][column].block.style.backgroundColor =
-                                "black";
-                        }
-                    }
-                }
-            }
-        }
-        return 2;
-    }
-    maskNumber3(matrix) {
-        for (let row = 0; row < matrix.length; row++) {
-            for (let column = 0; column < matrix.length; column++) {
-                if (column % 3 == 0) {
-                    if (!matrix[row][column].drew) {
-                        if (
-                            matrix[row][column].block.style.backgroundColor ==
-                            "black"
-                        ) {
-                            matrix[row][column].block.style.backgroundColor =
-                                "white";
-                        } else {
-                            matrix[row][column].block.style.backgroundColor =
-                                "black";
-                        }
-                    }
-                }
-            }
-        }
-        return 3;
-    }
-    maskNumber4(matrix) {
-        for (let row = 0; row < matrix.length; row++) {
-            for (let column = 0; column < matrix.length; column++) {
-                if ((Math.floor(row / 2) + Math.floor(column / 3)) % 2 == 0) {
-                    if (!matrix[row][column].drew) {
-                        if (
-                            matrix[row][column].block.style.backgroundColor ==
-                            "black"
-                        ) {
-                            matrix[row][column].block.style.backgroundColor =
-                                "white";
-                        } else {
-                            matrix[row][column].block.style.backgroundColor =
-                                "black";
-                        }
-                    }
-                }
-            }
-        }
-        return 4;
-    }
-    maskNumber5(matrix) {
-        for (let row = 0; row < matrix.length; row++) {
-            for (let column = 0; column < matrix.length; column++) {
-                if (((row * column) % 2) + ((row * column) % 3) == 0) {
-                    if (!matrix[row][column].drew) {
-                        if (
-                            matrix[row][column].block.style.backgroundColor ==
-                            "black"
-                        ) {
-                            matrix[row][column].block.style.backgroundColor =
-                                "white";
-                        } else {
-                            matrix[row][column].block.style.backgroundColor =
-                                "black";
-                        }
-                    }
-                }
-            }
-        }
-        return 5;
-    }
-    maskNumber6(matrix) {
-        for (let row = 0; row < matrix.length; row++) {
-            for (let column = 0; column < matrix.length; column++) {
-                if ((((row * column) % 2) + ((row * column) % 3)) % 2 == 0) {
-                    if (!matrix[row][column].drew) {
-                        if (
-                            matrix[row][column].block.style.backgroundColor ==
-                            "black"
-                        ) {
-                            matrix[row][column].block.style.backgroundColor =
-                                "white";
-                        } else {
-                            matrix[row][column].block.style.backgroundColor =
-                                "black";
-                        }
-                    }
-                }
-            }
-        }
-        return 6;
-    }
-    maskNumber7(matrix) {
-        for (let row = 0; row < matrix.length; row++) {
-            for (let column = 0; column < matrix.length; column++) {
-                if ((((row + column) % 2) + ((row * column) % 3)) % 2 == 0) {
-                    if (!matrix[row][column].drew) {
-                        if (
-                            matrix[row][column].block.style.backgroundColor ==
-                            "black"
-                        ) {
-                            matrix[row][column].block.style.backgroundColor =
-                                "white";
-                        } else {
-                            matrix[row][column].block.style.backgroundColor =
-                                "black";
-                        }
-                    }
-                }
-            }
-        }
-        return 7;
+        return number;
     }
 
     drawBase(qrCodeType) {
@@ -489,10 +377,7 @@ export default class QrCodeRenderer {
             if (positionX != "") {
                 positions.forEach((positionY) => {
                     if (positionY != "") {
-                        this.drawAlignmentPattern(
-                            positionX,
-                            positionY,
-                        );
+                        this.drawAlignmentPattern(positionX, positionY);
                         console.log(`(${positionX} ; ${positionY} )`);
                     }
                 });
